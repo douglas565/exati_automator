@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automação Exati - Verificação de Pontos</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .config-section {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button.success {
+            background-color: #2ecc71;
+        }
+        button.success:hover {
+            background-color: #27ae60;
+        }
+        button.danger {
+            background-color: #e74c3c;
+        }
+        button.danger:hover {
+            background-color: #c0392b;
+        }
+        button.warning {
+            background-color: #f39c12;
+        }
+        button.warning:hover {
+            background-color: #d35400;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .processing-section {
+            display: none;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #3498db;
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        .point-info {
+            margin: 20px 0;
+        }
+        .image-container {
+            text-align: center;
+            margin: 20px 0;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .image-container img {
+            max-width: 100%;
+            max-height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .image-navigation {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .image-navigation button {
+            margin: 0 5px;
+        }
+        .image-counter {
+            text-align: center;
+            margin-top: 5px;
+            color: #7f8c8d;
+        }
+        .verification-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            gap: 10px;
+        }
+        .verification-controls input {
+            width: 100px;
+        }
+        .log-section {
+            margin-top: 20px;
+        }
+        .log-container {
+            height: 200px;
+            overflow-y: auto;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .control-buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 10px;
+        }
+        .user-selection {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .user-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .user-button:hover, .user-button.selected {
+            background-color: #2980b9;
+            transform: scale(1.05);
+        }
+        .advanced-toggle {
+            text-align: center;
+            margin-top: 15px;
+            color: #7f8c8d;
+            cursor: pointer;
+        }
+        .advanced-settings {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #ddd;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Automação Exati - Verificação de Pontos</h1>
+        
+        <div class="config-section" id="configSection">
+            <h2>Configuração</h2>
+            <div class="form-group">
+                <label for="sharepoint-url">URL da Planilha (SharePoint):</label>
+                <input type="text" id="sharepoint-url" placeholder="https://engie.sharepoint.com/...">
+            </div>
+            <div class="form-group">
+                <label for="exati-url">URL do Exati:</label>
+                <input type="text" id="exati-url" placeholder="https://engiecuritiba.exati.com.br/guia/app/#/">
+            </div>
+            <div class="form-group">
+                <label for="exati-username">Usuário Exati:</label>
+                <input type="text" id="exati-username" placeholder="seu.usuario">
+            </div>
+            <div class="form-group">
+                <label for="exati-password">Senha Exati:</label>
+                <input type="password" id="exati-password">
+            </div>
+            
+            <button id="scan-users-btn" class="success">Escanear Usuários da Planilha</button>
+            
+            <div id="user-selection-container" style="display: none;">
+                <h3>Selecione seu nome na planilha:</h3>
+                <div class="user-selection" id="user-selection">
+                    <!-- Os botões de usuário serão adicionados aqui dinamicamente -->
+                </div>
+            </div>
+            
+            <div class="advanced-toggle" id="advanced-toggle">
+                Mostrar configurações avançadas ▼
+            </div>
+            
+            <div class="advanced-settings" id="advanced-settings">
+                <div class="form-group">
+                    <label for="sharepoint-username">Usuário SharePoint (opcional):</label>
+                    <input type="text" id="sharepoint-username" placeholder="seu.email@engie.com">
+                </div>
+                <div class="form-group">
+                    <label for="sharepoint-password">Senha SharePoint (opcional):</label>
+                    <input type="password" id="sharepoint-password">
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button id="start-btn" disabled>Iniciar Automação</button>
+            </div>
+        </div>
+        
+        <div class="processing-section" id="processingSection">
+            <h2>Processamento</h2>
+            <div class="progress-bar">
+                <div class="progress-bar-fill" id="progressBar" style="width: 0%;"></div>
+            </div>
+            <div id="progressText">Processando 0 de 0</div>
+            
+            <div class="point-info">
+                <h3>ID Ponto Atual: <span id="currentPointId">-</span></h3>
+            </div>
+            
+            <div class="image-container">
+                <img id="pointImage" src="" alt="Imagem do ponto não disponível">
+                <div class="image-navigation">
+                    <button id="prevImageBtn">◀ Anterior</button>
+                    <button id="nextImageBtn">Próxima ▶</button>
+                </div>
+                <div class="image-counter" id="imageCounter">Imagem 0 de 0</div>
+            </div>
+            
+            <div class="verification-controls">
+                <button id="okBtn" class="success">OK</button>
+                <span>ou</span>
+                <input type="text" id="potenciaInput" placeholder="Potência">
+                <button id="confirmPotenciaBtn">Confirmar Potência</button>
+            </div>
+            
+            <div class="control-buttons">
+                <button id="pauseBtn" class="warning">Pausar</button>
+                <button id="stopBtn" class="danger">Parar</button>
+            </div>
+            
+            <div class="log-section">
+                <h3>Log de Atividades</h3>
+                <div class="log-container" id="logContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estado da aplicação
+        const state = {
+            running: false,
+            paused: false,
+            currentUser: null,
+            currentPointId: null,
+            imageUrls: [],
+            currentImageIndex: 0,
+            totalImages: 0,
+            progress: "Idle",
+            log: []
+        };
+        
+        // Elementos DOM
+        const configSection = document.getElementById('configSection');
+        const processingSection = document.getElementById('processingSection');
+        const sharepointUrlInput = document.getElementById('sharepoint-url');
+        const exatiUrlInput = document.getElementById('exati-url');
+        const exatiUsernameInput = document.getElementById('exati-username');
+        const exatiPasswordInput = document.getElementById('exati-password');
+        const sharepointUsernameInput = document.getElementById('sharepoint-username');
+        const sharepointPasswordInput = document.getElementById('sharepoint-password');
+        const scanUsersBtn = document.getElementById('scan-users-btn');
+        const userSelectionContainer = document.getElementById('user-selection-container');
+        const userSelection = document.getElementById('user-selection');
+        const startBtn = document.getElementById('start-btn');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const currentPointId = document.getElementById('currentPointId');
+        const pointImage = document.getElementById('pointImage');
+        const imageCounter = document.getElementById('imageCounter');
+        const prevImageBtn = document.getElementById('prevImageBtn');
+        const nextImageBtn = document.getElementById('nextImageBtn');
+        const okBtn = document.getElementById('okBtn');
+        const potenciaInput = document.getElementById('potenciaInput');
+        const confirmPotenciaBtn = document.getElementById('confirmPotenciaBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const logContainer = document.getElementById('logContainer');
+        const advancedToggle = document.getElementById('advanced-toggle');
+        const advancedSettings = document.getElementById('advanced-settings');
+        
+        // Funções de utilidade
+        function addLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+            state.log.push(logMessage);
+            logContainer.innerHTML += logMessage + '\n';
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function updateUI() {
+            // Atualiza a barra de progresso
+            if (state.running) {
+                const progressParts = state.progress.split(' ');
+                if (progressParts.length >= 3) {
+                    const current = parseInt(progressParts[1]);
+                    const total = parseInt(progressParts[3]);
+                    const percentage = (current / total) * 100;
+                    progressBar.style.width = `${percentage}%`;
+                    progressText.textContent = state.progress;
+                }
+            }
+            
+            // Atualiza o ID do ponto atual
+            currentPointId.textContent = state.currentPointId || '-';
+            
+            // Atualiza a imagem
+            if (state.imageUrls.length > 0 && state.currentImageIndex < state.imageUrls.length) {
+                pointImage.src = state.imageUrls[state.currentImageIndex];
+                imageCounter.textContent = `Imagem ${state.currentImageIndex + 1} de ${state.totalImages}`;
+            } else {
+                pointImage.src = '';
+                pointImage.alt = 'Imagem do ponto não disponível';
+                imageCounter.textContent = 'Imagem 0 de 0';
+            }
+            
+            // Atualiza os botões de navegação de imagem
+            prevImageBtn.disabled = state.totalImages <= 1;
+            nextImageBtn.disabled = state.totalImages <= 1;
+            
+            // Atualiza os botões de controle
+            pauseBtn.textContent = state.paused ? 'Retomar' : 'Pausar';
+            
+            // Atualiza a visibilidade das seções
+            configSection.style.display = state.running ? 'none' : 'block';
+            processingSection.style.display = state.running ? 'block' : 'none';
+        }
+        
+        // Funções de API
+        async function scanUsers() {
+            try {
+                scanUsersBtn.disabled = true;
+                scanUsersBtn.innerHTML = '<div class="loading"></div> Escaneando...';
+                
+                const response = await fetch('/scan_users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sharepoint_url: sharepointUrlInput.value,
+                        exati_url: exatiUrlInput.value,
+                        exati_username: exatiUsernameInput.value,
+                        exati_password: exatiPasswordInput.value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    userSelectionContainer.style.display = 'block';
+                    userSelection.innerHTML = '';
+                    
+                    data.users.forEach(user => {
+                        const button = document.createElement('button');
+                        button.className = 'user-button';
+                        button.textContent = user;
+                        button.onclick = () => selectUser(user, button);
+                        userSelection.appendChild(button);
+                    });
+                    
+                    addLog(data.message);
+                } else {
+                    addLog(`Erro: ${data.message}`);
+                    alert(`Erro: ${data.message}`);
+                }
+            } catch (error) {
+                addLog(`Erro ao escanear usuários: ${error.message}`);
+                alert(`Erro ao escanear usuários: ${error.message}`);
+            } finally {
+                scanUsersBtn.disabled = false;
+                scanUsersBtn.textContent = 'Escanear Usuários da Planilha';
+            }
+        }
+        
+        function selectUser(user, button) {
+            // Remove a classe 'selected' de todos os botões
+            document.querySelectorAll('.user-button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            // Adiciona a classe 'selected' ao botão clicado
+            button.classList.add('selected');
+            
+            // Atualiza o estado
+            state.currentUser = user;
+            
+            // Habilita o botão de iniciar
+            startBtn.disabled = false;
+            
+            addLog(`Usuário selecionado: ${user}`);
+        }
+        
+        async function startAutomation() {
+            try {
+                startBtn.disabled = true;
+                startBtn.innerHTML = '<div class="loading"></div> Iniciando...';
+                
+                const response = await fetch('/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sharepoint_url: sharepointUrlInput.value,
+                        exati_url: exatiUrlInput.value,
+                        exati_username: exatiUsernameInput.value,
+                        exati_password: exatiPasswordInput.value,
+                        sharepoint_username: sharepointUsernameInput.value,
+                        sharepoint_password: sharepointPasswordInput.value,
+                        current_user: state.currentUser
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Atualiza o estado
+                    state.running = data.state.running;
+                    state.paused = data.state.paused;
+                    state.currentPointId = data.state.current_id;
+                    state.imageUrls = data.state.image_urls;
+                    state.currentImageIndex = data.state.current_image_index;
+                    state.totalImages = data.state.total_images;
+                    state.progress = data.state.progress;
+                    state.log = data.state.log;
+                    
+                    // Atualiza o log
+                    logContainer.innerHTML = '';
+                    data.state.log.forEach(message => {
+                        logContainer.innerHTML += message + '\n';
+                    });
+                    
+                    // Atualiza a UI
+                    updateUI();
+                } else {
+                    addLog(`Erro: ${data.message}`);
+                    alert(`Erro: ${data.message}`);
+                    startBtn.disabled = false;
+                }
+            } catch (error) {
+                addLog(`Erro ao iniciar automação: ${error.message}`);
+                alert(`Erro ao iniciar automação: ${error.message}`);
+                startBtn.disabled = false;
+            } finally {
+                startBtn.textContent = 'Iniciar Automação';
+            }
+        }
+        
+        async function submitVerification(value) {
+            try {
+                okBtn.disabled = true;
+                confirmPotenciaBtn.disabled = true;
+                
+                const response = await fetch('/submit_verification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        value: value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Atualiza o estado
+                    state.running = data.state.running;
+                    state.paused = data.state.paused;
+                    state.currentPointId = data.state.current_id;
+                    state.imageUrls = data.state.image_urls;
+                    state.currentImageIndex = data.state.current_image_index;
+                    state.totalImages = data.state.total_images;
+                    state.progress = data.state.progress;
+                    state.log = data.state.log;
+                    
+                    // Limpa o campo de potência
+                    potenciaInput.value = '';
+                    
+                    // Atualiza o log
+                    logContainer.innerHTML = '';
+                    data.state.log.forEach(message => {
+                        logContainer.innerHTML += message + '\n';
+                    });
+                    
+                    // Atualiza a UI
+                    updateUI();
+                    
+                    // Se a automação terminou, volta para a tela de configuração
+                    if (!state.running) {
+                        setTimeout(() => {
+                            alert('Todos os pontos foram processados!');
+                            configSection.style.display = 'block';
+                            processingSection.style.display = 'none';
+                        }, 1000);
+                    }
+                } else {
+                    addLog(`Erro: ${data.message}`);
+                    alert(`Erro: ${data.message}`);
+                }
+            } catch (error) {
+                addLog(`Erro ao submeter verificação: ${error.message}`);
+                alert(`Erro ao submeter verificação: ${error.message}`);
+            } finally {
+                okBtn.disabled = false;
+                confirmPotenciaBtn.disabled = false;
+            }
+        }
+        
+        async function navigateImage(direction) {
+            try {
+                prevImageBtn.disabled = true;
+                nextImageBtn.disabled = true;
+                
+                const endpoint = direction === 'next' ? '/next_image' : '/prev_image';
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Atualiza o estado
+                    state.currentImageIndex = data.state.current_image_index;
+                    
+                    // Atualiza o log
+                    if (data.state.log && data.state.log.length > state.log.length) {
+                        const newLogs = data.state.log.slice(state.log.length);
+                        newLogs.forEach(message => {
+                            addLog(message);
+                        });
+                        state.log = data.state.log;
+                    }
+                    
+                    // Atualiza a UI
+                    updateUI();
+                } else {
+                    addLog(`Erro: ${data.message}`);
+                }
+            } catch (error) {
+                addLog(`Erro ao navegar entre imagens: ${error.message}`);
+            } finally {
+                prevImageBtn.disabled = false;
+                nextImageBtn.disabled = false;
+            }
+        }
+        
+        async function pauseAutomation() {
+            try {
+                pauseBtn.disabled = true;
+                
+                const endpoint = state.paused ? '/resume' : '/pause';
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Atualiza o estado
+                    state.paused = data.state.paused;
+                    
+                    // Atualiza o log
+                    if (data.state.log && data.state.log.length > state.log.length) {
+                        const newLogs = data.state.log.slice(state.log.length);
+                        newLogs.forEach(message => {
+                            addLog(message);
+                        });
+                        state.log = data.state.log;
+                    }
+                    
+                    // Atualiza a UI
+                    updateUI();
+                } else {
+                    addLog(`Erro: ${data.message}`);
+                }
+            } catch (error) {
+                addLog(`Erro ao pausar/retomar automação: ${error.message}`);
+            } finally {
+                pauseBtn.disabled = false;
+            }
+        }
+        
+        async function stopAutomation() {
+            if (!confirm('Tem certeza que deseja parar a automação?')) {
+                return;
+            }
+            
+            try {
+                stopBtn.disabled = true;
+                
+                const response = await fetch('/stop', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Atualiza o estado
+                    state.running = false;
+                    state.paused = false;
+                    
+                    // Atualiza o log
+                    if (data.state.log && data.state.log.length > state.log.length) {
+                        const newLogs = data.state.log.slice(state.log.length);
+                        newLogs.forEach(message => {
+                            addLog(message);
+                        });
+                        state.log = data.state.log;
+                    }
+                    
+                    // Volta para a tela de configuração
+                    configSection.style.display = 'block';
+                    processingSection.style.display = 'none';
+                } else {
+                    addLog(`Erro: ${data.message}`);
+                }
+            } catch (error) {
+                addLog(`Erro ao parar automação: ${error.message}`);
+            } finally {
+                stopBtn.disabled = false;
+            }
+        }
+        
+        // Event listeners
+        scanUsersBtn.addEventListener('click', scanUsers);
+        startBtn.addEventListener('click', startAutomation);
+        okBtn.addEventListener('click', () => submitVerification('ok'));
+        confirmPotenciaBtn.addEventListener('click', () => {
+            const potencia = potenciaInput.value.trim();
+            if (potencia) {
+                submitVerification(potencia);
+            } else {
+                alert('Por favor, insira um valor de potência.');
+            }
+        });
+        prevImageBtn.addEventListener('click', () => navigateImage('prev'));
+        nextImageBtn.addEventListener('click', () => navigateImage('next'));
+        pauseBtn.addEventListener('click', pauseAutomation);
+        stopBtn.addEventListener('click', stopAutomation);
+        advancedToggle.addEventListener('click', () => {
+            if (advancedSettings.style.display === 'block') {
+                advancedSettings.style.display = 'none';
+                advancedToggle.textContent = 'Mostrar configurações avançadas ▼';
+            } else {
+                advancedSettings.style.display = 'block';
+                advancedToggle.textContent = 'Ocultar configurações avançadas ▲';
+            }
+        });
+        
+        // Inicialização
+        updateUI();
+        addLog('Interface inicializada. Pronto para começar.');
+    </script>
+</body>
+</html>
